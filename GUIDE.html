@@ -1,0 +1,1033 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Hub Dashboard — Build Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f1a;
+      --surface:     #141623;
+      --surface-2:   #1c1f33;
+      --border:      #272a40;
+      --text:        #c9cfe0;
+      --text-muted:  #656d8a;
+      --text-bright: #eef0f8;
+      --accent:      #7c6af7;
+      --accent-dim:  rgba(124,106,247,0.15);
+      --green:       #22c55e;
+      --green-dim:   rgba(34,197,94,0.12);
+      --amber:       #f59e0b;
+      --amber-dim:   rgba(245,158,11,0.12);
+      --red:         #f87171;
+      --red-dim:     rgba(248,113,113,0.12);
+      --cyan:        #22d3ee;
+      --cyan-dim:    rgba(34,211,238,0.12);
+      --radius:      10px;
+      --font: system-ui, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    /* ── NAV ────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,15,26,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 2rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    nav span { color: var(--text-muted); font-size: 13px; margin-right: 0.5rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+    nav a {
+      font-size: 13px; color: var(--text-muted);
+      text-decoration: none; padding: 0.3rem 0.7rem;
+      border-radius: 6px; transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    nav a:hover { color: var(--text-bright); background: var(--surface-2); border-color: var(--border); }
+    .nav-phase { color: var(--accent) !important; border-color: var(--accent-dim) !important; }
+
+    /* ── PROGRESS BAR ───────────────────────────────────── */
+    #progress-wrap {
+      position: sticky; top: 43px; z-index: 99;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.55rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    #progress-bar-bg {
+      flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden;
+    }
+    #progress-bar { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+    #progress-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; min-width: 90px; text-align: right; }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    .page { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem 6rem; }
+
+    /* ── HERO ───────────────────────────────────────────── */
+    .hero {
+      text-align: center; padding: 3.5rem 1rem 2.5rem;
+      border-bottom: 1px solid var(--border); margin-bottom: 3rem;
+    }
+    .hero-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent); background: var(--accent-dim);
+      padding: 0.3rem 0.9rem; border-radius: 99px;
+      border: 1px solid rgba(124,106,247,0.3); margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+      color: var(--text-bright); line-height: 1.15; margin-bottom: 0.75rem;
+      letter-spacing: -0.03em;
+    }
+    .hero p { color: var(--text-muted); max-width: 520px; margin: 0 auto; font-size: 15px; }
+
+    /* ── SECTION HEADERS ────────────────────────────────── */
+    .section-title {
+      font-size: 1.05rem; font-weight: 700; color: var(--text-bright);
+      letter-spacing: -0.01em; margin-bottom: 0.25rem;
+    }
+    .section-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+    /* ── PHASE BLOCK ────────────────────────────────────── */
+    .phase {
+      margin-bottom: 3.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .phase-label {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 11px; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; margin-bottom: 0.5rem;
+    }
+    .phase-label .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    }
+    .p0 { color: var(--text-muted); }
+    .p1 { color: var(--cyan); }
+    .p2 { color: var(--green); }
+    .p3 { color: var(--amber); }
+    .concepts-label { color: var(--accent); }
+
+    .phase-title {
+      font-size: 1.5rem; font-weight: 700; color: var(--text-bright);
+      letter-spacing: -0.02em; margin-bottom: 0.4rem;
+    }
+    .phase-goal {
+      font-size: 13.5px; color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 0.6rem 1rem; border-radius: 7px;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1.8rem;
+    }
+    .phase-goal::before { content: "🎯"; }
+
+    /* ── STEP BLOCK ─────────────────────────────────────── */
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem;
+    }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: var(--accent-dim); color: var(--accent);
+      font-size: 11px; font-weight: 800; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .step-title { font-weight: 700; color: var(--text-bright); font-size: 0.95rem; }
+    .step-desc { font-size: 13.5px; color: var(--text-muted); margin-bottom: 1rem; }
+
+    /* ── TASKS (CHECKBOXES) ─────────────────────────────── */
+    .tasks { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .task {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.5rem 0.75rem; border-radius: 7px;
+      cursor: pointer; transition: background 0.1s;
+      border: 1px solid transparent;
+    }
+    .task:hover { background: var(--surface-2); border-color: var(--border); }
+    .task input[type="checkbox"] {
+      width: 16px; height: 16px; margin-top: 2px;
+      accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+    }
+    .task label { cursor: pointer; font-size: 13.5px; color: var(--text); }
+    .task.done label { text-decoration: line-through; color: var(--text-muted); }
+
+    /* ── CALLOUT BOXES ──────────────────────────────────── */
+    details.callout {
+      border-radius: 8px; overflow: hidden;
+      margin-top: 0.6rem; margin-bottom: 0.2rem;
+      border: 1px solid;
+    }
+    details.callout summary {
+      padding: 0.55rem 1rem;
+      font-size: 12.5px; font-weight: 700;
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; gap: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+    details.callout summary::-webkit-details-marker { display: none; }
+    details.callout summary::before { content: "▸"; font-size: 10px; transition: transform 0.2s; }
+    details.callout[open] summary::before { transform: rotate(90deg); }
+    details.callout .callout-body {
+      padding: 0.75rem 1rem 0.9rem;
+      font-size: 13px; line-height: 1.7;
+      border-top: 1px solid;
+    }
+    details.callout .callout-body p + p { margin-top: 0.5rem; }
+
+    /* hint = purple */
+    details.hint { background: var(--accent-dim); border-color: rgba(124,106,247,0.3); }
+    details.hint summary { color: var(--accent); }
+    details.hint .callout-body { border-color: rgba(124,106,247,0.3); color: #c4bffd; }
+
+    /* warn = red */
+    details.warn { background: var(--red-dim); border-color: rgba(248,113,113,0.3); }
+    details.warn summary { color: var(--red); }
+    details.warn .callout-body { border-color: rgba(248,113,113,0.25); color: #fca5a5; }
+
+    /* concept = cyan */
+    details.concept { background: var(--cyan-dim); border-color: rgba(34,211,238,0.3); }
+    details.concept summary { color: var(--cyan); }
+    details.concept .callout-body { border-color: rgba(34,211,238,0.25); color: #a5f3fc; }
+
+    /* tip = green */
+    details.tip { background: var(--green-dim); border-color: rgba(34,197,94,0.3); }
+    details.tip summary { color: var(--green); }
+    details.tip .callout-body { border-color: rgba(34,197,94,0.25); color: #86efac; }
+
+    /* ── INLINE CODE ────────────────────────────────────── */
+    code {
+      font-family: var(--mono); font-size: 12.5px;
+      background: var(--surface-2); color: #c084fc;
+      padding: 1px 6px; border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── COMPONENT TREE ─────────────────────────────────── */
+    .tree {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      line-height: 1.9; color: var(--text);
+    }
+    .tree .t-file { color: #a78bfa; }
+    .tree .t-note { color: var(--text-muted); font-style: italic; }
+    .tree .t-arrow { color: var(--accent); }
+    .tree .t-state { color: var(--green); }
+
+    /* ── CONCEPT CARDS ──────────────────────────────────── */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .concept-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.1rem;
+    }
+    .concept-card h4 {
+      font-size: 13px; font-weight: 700; color: var(--accent);
+      margin-bottom: 0.4rem; letter-spacing: 0.02em;
+    }
+    .concept-card p { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── FINAL CHECKLIST ────────────────────────────────── */
+    .checklist-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+    @media (max-width: 580px) { .checklist-grid { grid-template-columns: 1fr; } }
+
+    /* ── DIVIDER ────────────────────────────────────────── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+    /* ── MISC ───────────────────────────────────────────── */
+    ul { padding-left: 1.2rem; }
+    ul li { font-size: 13.5px; color: var(--text-muted); margin-bottom: 0.35rem; }
+    strong { color: var(--text-bright); font-weight: 600; }
+    .mb { margin-bottom: 1rem; }
+    .mt { margin-top: 0.75rem; }
+
+    /* ── API TABLE ──────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 0.75rem; }
+    th { text-align: left; padding: 0.45rem 0.75rem; color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; border-bottom: 1px solid var(--border); }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    td code { font-size: 11.5px; }
+  </style>
+</head>
+<body>
+
+<!-- ──────────────────────────── NAV ──────────────────────────── -->
+<nav>
+  <span>Phases</span>
+  <a href="#setup" class="nav-phase">0 · Setup</a>
+  <a href="#phase1" class="nav-phase">1 · Layout</a>
+  <a href="#phase2" class="nav-phase">2 · State</a>
+  <a href="#phase3" class="nav-phase">3 · API</a>
+  <a href="#concepts">Concepts</a>
+  <a href="#checklist">Checklist</a>
+</nav>
+
+<!-- ──────────────────────── PROGRESS BAR ──────────────────────── -->
+<div id="progress-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+  <div id="progress-label">0 / 0 tasks</div>
+</div>
+
+<!-- ──────────────────────────── PAGE ─────────────────────────── -->
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">React Fundamentals Project</div>
+    <h1>Personal Hub Dashboard</h1>
+    <p>A step-by-step build guide. Every checkbox is a concept. Complete them all before you touch Next.js.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       OVERVIEW
+  ══════════════════════════════════════════════════════════ -->
+  <section id="overview" style="margin-bottom:3rem;">
+    <div class="section-title">What You're Building</div>
+    <div class="section-sub">A single-page dashboard with three side-by-side widgets.</div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">≡</div>
+        <div class="step-title">Component Architecture & Data Flow</div>
+      </div>
+      <p class="step-desc">Before writing a line, read this tree until you understand <em>who owns what.</em> The golden rule: <strong>state lives in the lowest common ancestor that needs it.</strong></p>
+      <div class="tree">
+<span class="t-file">App.jsx</span>  <span class="t-state">← owns: expenses[], todos[]</span>
+│
+├── <span class="t-file">CryptoWeatherWidget.jsx</span>  <span class="t-state">← owns its own fetched data</span>
+│     <span class="t-note">(no props from App — it fetches independently)</span>
+│
+├── <span class="t-file">ExpenseTracker.jsx</span>  <span class="t-arrow">props: expenses, onAdd, onDelete</span>
+│   ├── <span class="t-file">ExpenseForm.jsx</span>    <span class="t-arrow">props: onAdd</span>
+│   └── <span class="t-file">ExpenseList.jsx</span>    <span class="t-arrow">props: expenses, onDelete</span>
+│
+└── <span class="t-file">TodoList.jsx</span>  <span class="t-arrow">props: todos, onAdd, onToggle, onDelete</span>
+    ├── <span class="t-file">TodoForm.jsx</span>       <span class="t-arrow">props: onAdd</span>
+    └── <span class="t-file">TodoItem.jsx</span>       <span class="t-arrow">props: todo, onToggle, onDelete</span>
+      </div>
+
+      <details class="concept mt">
+        <summary>Why does App.jsx own the expense and todo arrays?</summary>
+        <div class="callout-body">
+          <p>Because <strong>state lifting</strong>: if two sibling components need to share data, that data must live in their common ancestor. Here, <code>ExpenseForm</code> writes new expenses and <code>ExpenseList</code> reads them. They are siblings. Their parent (<code>ExpenseTracker</code>) is the right home — or <code>App.jsx</code> if you later want a grand total across everything.</p>
+          <p><code>CryptoWeatherWidget</code> breaks this pattern intentionally — its data is completely self-contained and nothing else cares about it, so it owns its own state.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">!</div>
+        <div class="step-title">Tailwind v4 — One Thing to Know</div>
+      </div>
+      <p class="step-desc">Your project already has Tailwind v4 installed. It works differently from v3.</p>
+      <ul>
+        <li>There is <strong>no <code>tailwind.config.js</code></strong> to create. Configuration is done in CSS.</li>
+        <li><code>index.css</code> already has <code>@import "tailwindcss"</code> — that one line is all the setup needed.</li>
+        <li>All utility classes (<code>flex</code>, <code>grid</code>, <code>p-4</code>, etc.) work identically to v3.</li>
+        <li>In v4, the <code>md:</code> breakpoint defaults to <code>768px</code> — same as v3.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       PHASE 0 — SETUP
+  ══════════════════════════════════════════════════════════ -->
+  <section id="setup" class="phase">
+    <div class="phase-label p0"><span class="dot"></span>Phase 0</div>
+    <div class="phase-title">Project Setup</div>
+    <div class="phase-goal">Clean the boilerplate. Start from a blank canvas.</div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">0.1</div>
+        <div class="step-title">Clean the Default Files</div>
+      </div>
+      <p class="step-desc">Vite ships with demo content. Strip it all out so you're not fighting it.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>In <code>src/index.css</code>, delete everything <strong>except</strong> the <code>@import "tailwindcss"</code> line on line 1. All those CSS variables and body rules — gone.</label></label>
+        <label class="task"><input type="checkbox" /><label>In <code>src/App.jsx</code>, delete all the existing JSX and imports. Leave just a function that returns a single <code>&lt;div&gt;Hello&lt;/div&gt;</code> so the file is valid. You'll replace this in Phase 1.</label></label>
+        <label class="task"><input type="checkbox" /><label>Delete <code>src/App.css</code> entirely. If <code>App.jsx</code> imports it, remove that import too.</label></label>
+        <label class="task"><input type="checkbox" /><label>Delete the content of <code>src/assets/</code> (the React SVG logo). You won't use it.</label></label>
+        <label class="task"><input type="checkbox" /><label>Run <code>npm run dev</code> and confirm the dev server starts without errors. "Hello" should appear.</label></label>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">0.2</div>
+        <div class="step-title">Create the Component Folder</div>
+      </div>
+      <p class="step-desc">All your widget components will live in one place.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Create the folder <code>src/components/</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Create these <strong>empty</strong> component files inside it — just a stub function returning <code>&lt;div /&gt;</code> for now: <code>CryptoWeatherWidget.jsx</code>, <code>ExpenseTracker.jsx</code>, <code>ExpenseForm.jsx</code>, <code>ExpenseList.jsx</code>, <code>TodoList.jsx</code>, <code>TodoForm.jsx</code>, <code>TodoItem.jsx</code></label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — What should a stub component look like?</summary>
+        <div class="callout-body">
+          <p>The minimum valid React component is a function that returns JSX. It doesn't have to do anything yet. Think: a named function, returning one JSX element, exported as default. That's it. Fill in the real content later.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       PHASE 1 — STATIC LAYOUT
+  ══════════════════════════════════════════════════════════ -->
+  <section id="phase1" class="phase">
+    <div class="phase-label p1"><span class="dot"></span>Phase 1</div>
+    <div class="phase-title">Static Layout</div>
+    <div class="phase-goal">Build the full visual shell with hardcoded data. Zero interactivity. Get the layout pixel-perfect first.</div>
+
+    <!-- 1.1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.1</div>
+        <div class="step-title">Semantic HTML Skeleton in App.jsx</div>
+      </div>
+      <p class="step-desc">The outer shell of the page uses meaningful HTML5 elements — not just divs.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Wrap everything inside a <code>&lt;main&gt;</code> element. This is the primary content landmark of your page.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a <code>&lt;header&gt;</code> inside <code>&lt;main&gt;</code> with an <code>&lt;h1&gt;</code> that reads "My Personal Hub". This is the page title.</label></label>
+        <label class="task"><input type="checkbox" /><label>Import and render your three widget components inside <code>&lt;main&gt;</code>, each wrapped in a <code>&lt;section&gt;</code>.</label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — What's the difference between &lt;div&gt; and &lt;section&gt;?</summary>
+        <div class="callout-body">
+          <p>A <code>&lt;div&gt;</code> is purely structural — it carries no meaning. A <code>&lt;section&gt;</code> says "this is a standalone, thematically grouped piece of content." Screen readers and search engines care about this distinction. The rule: if your grouped content could have its own heading, it should be a <code>&lt;section&gt;</code>.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.2</div>
+        <div class="step-title">Responsive Three-Column Grid</div>
+      </div>
+      <p class="step-desc">The three sections should stack on mobile and sit side-by-side on desktop. This is done with a single container div around the three sections.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Add a <code>&lt;div&gt;</code> (or keep using semantic tags) around your three <code>&lt;section&gt;</code> widgets. This is the grid container.</label></label>
+        <label class="task"><input type="checkbox" /><label>Apply Tailwind grid classes to it. You need: enable grid, set gap between items, define 1 column on small screens, define 3 columns starting at the <code>md</code> breakpoint.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a max-width to the container and center it horizontally with <code>mx-auto</code>. Use <code>px-4</code> for side padding and <code>py-8</code> for vertical breathing room.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — How does the Tailwind responsive prefix work?</summary>
+        <div class="callout-body">
+          <p>Tailwind is <strong>mobile-first</strong>. A class without a prefix applies to all screen sizes. A class with <code>md:</code> applies <em>at</em> the md breakpoint (768px) <em>and above</em>.</p>
+          <p>So <code>grid-cols-1 md:grid-cols-3</code> means: "1 column always, then override to 3 columns once the screen is ≥768px." You never need to write media queries by hand.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.3</div>
+        <div class="step-title">Card Styling for Each Widget</div>
+      </div>
+      <p class="step-desc">Each section should look like a distinct card. Do this styling directly on the <code>&lt;section&gt;</code> element or the outer element in each component.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Add a white (or dark if you prefer) background: <code>bg-white</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Round the corners: <code>rounded-xl</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a subtle shadow: <code>shadow-md</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add generous internal padding: <code>p-6</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add an <code>&lt;h2&gt;</code> inside each component with the widget's name. Style it with <code>text-xl font-semibold text-gray-800 mb-4</code>.</label></label>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.4</div>
+        <div class="step-title">Expense Tracker Shell</div>
+      </div>
+      <p class="step-desc">Build the form and list in <code>ExpenseTracker.jsx</code>. Everything is hardcoded — no state yet.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Write a <code>&lt;form&gt;</code> with: one <code>&lt;input type="text"&gt;</code> for the item name, one <code>&lt;input type="number"&gt;</code> for the price, and a <code>&lt;button type="submit"&gt;</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a <code>&lt;label&gt;</code> above each input with a <code>for</code> attribute that matches the input's <code>id</code>. This is required for accessibility.</label></label>
+        <label class="task"><input type="checkbox" /><label>Style the inputs: <code>border border-gray-300 rounded-lg px-3 py-2 w-full</code>. Style the button with a distinct background color and some padding.</label></label>
+        <label class="task"><input type="checkbox" /><label>Below the form, add a hardcoded list of 2–3 expense items. Each item is a <code>&lt;div&gt;</code> using <code>flex justify-between items-center</code> — name on the left, price and a "Delete" button on the right.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a total row at the bottom: a separator line (<code>&lt;hr&gt;</code>), then a bold "Total: $XX.XX" line.</label></label>
+      </div>
+      <details class="warn">
+        <summary>Common mistake — &lt;button&gt; type attribute</summary>
+        <div class="callout-body">
+          <p>A <code>&lt;button&gt;</code> inside a <code>&lt;form&gt;</code> has a default type of <code>"submit"</code>. This means even your "Delete" button will submit the form if you forget to set <code>type="button"</code> on it. Always be explicit: form submission button gets <code>type="submit"</code>, all others get <code>type="button"</code>.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 1.5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.5</div>
+        <div class="step-title">Todo List Shell</div>
+      </div>
+      <p class="step-desc">Build in <code>TodoList.jsx</code>. Still hardcoded.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Write a <code>&lt;form&gt;</code> with: one <code>&lt;input type="text"&gt;</code> for the task, and a <code>&lt;button type="submit"&gt;</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Below the form, add a hardcoded list of 3 todos. Each is a <code>&lt;div&gt;</code> with <code>flex items-center gap-3</code> — a checkbox on the left, task text in the middle, delete button on the right.</label></label>
+        <label class="task"><input type="checkbox" /><label>The checkbox is <code>&lt;input type="checkbox"&gt;</code>. Hardcode one of them with the <code>checked</code> attribute so it looks ticked.</label></label>
+        <label class="task"><input type="checkbox" /><label>For the "completed" item, manually add the classes <code>line-through text-gray-400</code> to its text span. You'll make this dynamic in Phase 2.</label></label>
+      </div>
+    </div>
+
+    <!-- 1.6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.6</div>
+        <div class="step-title">Crypto / Weather Widget Shell</div>
+      </div>
+      <p class="step-desc">Build the static frame of your data card in <code>CryptoWeatherWidget.jsx</code>.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Add a "Loading data..." paragraph. Style it with <code>text-gray-400 text-sm</code>. You'll replace this with real conditional rendering in Phase 3.</label></label>
+        <label class="task"><input type="checkbox" /><label>Hardcode 2–3 rows of fake data (e.g. "Bitcoin: $105,000"). Use <code>flex justify-between</code> for each row so the label and value are on opposite sides.</label></label>
+        <label class="task"><input type="checkbox" /><label>Style the value numbers differently from the labels — heavier font weight, different color. Give them a dashboard-data feel.</label></label>
+      </div>
+    </div>
+
+    <!-- 1.7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">1.7</div>
+        <div class="step-title">Interactive States on Inputs & Buttons</div>
+      </div>
+      <p class="step-desc">Tailwind's state variants let you style hover, focus, and disabled states without writing custom CSS.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>All inputs: add <code>focus:outline-none focus:ring-2 focus:ring-indigo-400</code>. Tab through your inputs in the browser and confirm the ring appears.</label></label>
+        <label class="task"><input type="checkbox" /><label>Primary buttons (Add / Submit): add <code>hover:bg-indigo-600</code> (adjust to match your color). Add <code>transition-colors</code> to make the change smooth.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add <code>disabled:opacity-50 disabled:cursor-not-allowed</code> to your submit buttons. Temporarily add the <code>disabled</code> HTML attribute to see the effect, then remove it.</label></label>
+        <label class="task"><input type="checkbox" /><label>Delete buttons: use a red color on hover — something like <code>hover:text-red-500</code> or <code>hover:bg-red-50</code>.</label></label>
+      </div>
+      <details class="tip">
+        <summary>Tip — Test responsive layout now</summary>
+        <div class="callout-body">
+          <p>Open your browser DevTools, toggle device toolbar, and resize the viewport. Confirm the grid collapses to a single column below 768px. Fix any overflow or padding issues at this point — it's much easier than doing it after Phase 2 adds complexity.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       PHASE 2 — FORMS & STATE
+  ══════════════════════════════════════════════════════════ -->
+  <section id="phase2" class="phase">
+    <div class="phase-label p2"><span class="dot"></span>Phase 2</div>
+    <div class="phase-title">Forms, State & Interactivity</div>
+    <div class="phase-goal">Replace all hardcoded data with React state. Every widget should be fully interactive by the end of this phase.</div>
+
+    <!-- 2.1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.1</div>
+        <div class="step-title">Controlled Input — ExpenseForm</div>
+      </div>
+      <p class="step-desc">A "controlled input" is an input whose value is driven by React state, not by the DOM. This is the standard React way.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Add <code>useState</code> for the item name — initial value: an empty string <code>""</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add <code>useState</code> for the price — initial value: an empty string <code>""</code> (not <code>0</code> — empty string gives you a blank input).</label></label>
+        <label class="task"><input type="checkbox" /><label>On each <code>&lt;input&gt;</code>, set its <code>value</code> attribute to its state variable, and set <code>onChange</code> to update that state.</label></label>
+        <label class="task"><input type="checkbox" /><label>Verify: type in the input. It should update. Open React DevTools and watch the state change in real time.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — Why "controlled"? What happens without it?</summary>
+        <div class="callout-body">
+          <p>Without a <code>value</code> binding, the input is "uncontrolled" — the DOM owns its value and React doesn't know about it. With <code>value={state}</code> + <code>onChange</code>, React owns the value. This is essential for: clearing inputs after submission, validating as the user types, and syncing input values with other parts of the UI.</p>
+          <p>Think of it this way: uncontrolled means "the DOM stores the truth." Controlled means "React stores the truth and the DOM just displays it."</p>
+        </div>
+      </details>
+      <details class="hint">
+        <summary>Hint — Price input: text or number state?</summary>
+        <div class="callout-body">
+          <p>The <code>&lt;input type="number"&gt;</code> DOM value is always a string (e.g. <code>"12.50"</code>). When you update state from <code>e.target.value</code>, you're storing a string. When you need to do math with it later, convert it: <code>parseFloat(value)</code>. Store as string in state, convert to number at use-time.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.2</div>
+        <div class="step-title">Parent State — The Expense Array</div>
+      </div>
+      <p class="step-desc">The list of expenses is an array of objects. This is "complex state." It lives in the parent component.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>In <code>ExpenseTracker.jsx</code> (or <code>App.jsx</code>), add a <code>useState</code> hook initialized to an empty array <code>[]</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Define the shape of one expense object: it needs an <code>id</code>, a <code>name</code>, and an <code>amount</code>. Write this as a comment for your own reference — no code needed yet.</label></label>
+        <label class="task"><input type="checkbox" /><label>Write an <code>addExpense</code> function that takes <code>(name, amount)</code>, builds a new expense object, and calls the state setter to add it.</label></label>
+      </div>
+      <details class="warn">
+        <summary>Warning — Never mutate state directly</summary>
+        <div class="callout-body">
+          <p>Do NOT do: <code>expenses.push(newItem)</code> then <code>setExpenses(expenses)</code>. This mutates the original array in place. React compares object references, not deep values. Since the array reference didn't change, React sees no difference and will NOT re-render.</p>
+          <p>Do this instead: <code>setExpenses([...expenses, newItem])</code>. The spread operator creates a brand new array with all the old items plus the new one. New reference = React re-renders.</p>
+        </div>
+      </details>
+      <details class="hint">
+        <summary>Hint — How to generate a unique ID</summary>
+        <div class="callout-body">
+          <p><code>Date.now()</code> returns the current timestamp in milliseconds — it's unique enough for a learning project. In production you'd use a UUID library, but this is fine here. Use it as the <code>id</code> of your new object.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.3</div>
+        <div class="step-title">State Lifting — Connect Form to Parent</div>
+      </div>
+      <p class="step-desc">The form lives in a child component. But the state lives in the parent. The parent passes a function <em>down</em> to the child so the child can trigger an update <em>up</em>.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Pass <code>addExpense</code> from the parent to <code>ExpenseForm</code> as a prop — name it something clear like <code>onAdd</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>In <code>ExpenseForm</code>, receive <code>onAdd</code> via destructuring in the function signature.</label></label>
+        <label class="task"><input type="checkbox" /><label>Write a <code>handleSubmit</code> function that: calls <code>e.preventDefault()</code>, calls <code>onAdd(name, amount)</code>, then resets both input states back to <code>""</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Attach <code>handleSubmit</code> to the form's <code>onSubmit</code> attribute (not to the button's <code>onClick</code>). This catches both button clicks and pressing Enter.</label></label>
+        <label class="task"><input type="checkbox" /><label>Test it: type into the form and submit. Open React DevTools and confirm the expenses array in the parent is growing.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — State Lifting in one sentence</summary>
+        <div class="callout-body">
+          <p>When a child needs to change its parent's state, the parent passes a <strong>callback function</strong> as a prop. The child calls that function with the new data. The parent updates state. React re-renders both. The child never touches the state directly — it only calls the function it was given.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.4</div>
+        <div class="step-title">Rendering the List with .map()</div>
+      </div>
+      <p class="step-desc">Replace the hardcoded items with a dynamic render of the expenses array.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Pass the <code>expenses</code> array from the parent down to <code>ExpenseList.jsx</code> as a prop.</label></label>
+        <label class="task"><input type="checkbox" /><label>In <code>ExpenseList</code>, use <code>.map()</code> on the <code>expenses</code> prop to return one JSX element per expense.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a unique <code>key={expense.id}</code> to the <strong>outermost element</strong> returned by each <code>.map()</code> iteration.</label></label>
+        <label class="task"><input type="checkbox" /><label>If the array is empty, render a friendly empty state: <code>&lt;p className="text-gray-400 text-sm"&gt;No expenses yet.&lt;/p&gt;</code>. Use a ternary or the <code>&&</code> short-circuit to conditionally show this.</label></label>
+      </div>
+      <details class="warn">
+        <summary>Warning — Why you must never use array index as key</summary>
+        <div class="callout-body">
+          <p>When items can be deleted or reordered, using the array index as <code>key</code> causes React to incorrectly reuse DOM nodes. Example: you have items [A, B, C] at indices [0, 1, 2]. You delete B. Now you have [A, C] at indices [0, 1]. React sees key=1 still exists and thinks C is still B — it may preserve old input values or incorrect DOM state.</p>
+          <p>Use a stable, unique ID from the data instead. That's why you added <code>id</code> to each expense object.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.5</div>
+        <div class="step-title">Delete an Expense with .filter()</div>
+      </div>
+      <p class="step-desc">Deletion is the mirror of addition: instead of adding to the array, you return a new array with one item removed.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Write a <code>deleteExpense</code> function in the same component that owns the array. It takes an <code>id</code> and updates state with a filtered array.</label></label>
+        <label class="task"><input type="checkbox" /><label>Pass <code>deleteExpense</code> down to <code>ExpenseList</code>, and then wire it to each item's delete button via <code>onClick</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Confirm: clicking delete removes the correct item and the list updates instantly.</label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — How to wire the onClick with the item's id</summary>
+        <div class="callout-body">
+          <p>The delete button needs to call the function <em>with</em> a specific id. If you write <code>onClick={onDelete(expense.id)}</code> — that calls the function immediately on render, not on click. You need an arrow function wrapper: <code>onClick={() =&gt; onDelete(expense.id)}</code>. The arrow function is created fresh on each render, but it closes over the specific <code>expense.id</code> of that row.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.6</div>
+        <div class="step-title">Running Total with .reduce()</div>
+      </div>
+      <p class="step-desc">Calculate the live total from the array. It should update every time an item is added or removed.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Calculate the total directly in JSX or just before the return statement. Do not use a <code>useEffect</code> or separate state for this — it's a pure derivation from the <code>expenses</code> array.</label></label>
+        <label class="task"><input type="checkbox" /><label>Use <code>.reduce()</code> on the expenses array. It takes an accumulator and the current item, and returns the running sum.</label></label>
+        <label class="task"><input type="checkbox" /><label>Display the total formatted to 2 decimal places using <code>.toFixed(2)</code>.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — Derived state vs stored state</summary>
+        <div class="callout-body">
+          <p>The total is a value you can always compute from the <code>expenses</code> array. Storing it in its own <code>useState</code> would be a mistake — you'd have to keep two pieces of state in sync, which is a common source of bugs. Instead, derive it: <code>const total = expenses.reduce(...)</code>. Every time <code>expenses</code> changes and React re-renders, <code>total</code> is recalculated for free. This principle — "derive, don't duplicate" — is fundamental to thinking in React.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.7</div>
+        <div class="step-title">Build the Todo List (Same Pattern)</div>
+      </div>
+      <p class="step-desc">Apply everything you just learned to the Todo list. The key difference: todos have a <code>completed</code> boolean you can toggle.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Set up state for the todo input and the <code>todos</code> array in <code>TodoList.jsx</code> (or <code>App.jsx</code> if you want both arrays in one place).</label></label>
+        <label class="task"><input type="checkbox" /><label>Each todo object needs: <code>id</code>, <code>text</code>, <code>completed</code> (boolean, starts as <code>false</code>).</label></label>
+        <label class="task"><input type="checkbox" /><label>Write <code>addTodo</code>, <code>deleteTodo</code>, and <code>toggleTodo</code> functions. Pass them down to the child components.</label></label>
+        <label class="task"><input type="checkbox" /><label>The toggle function uses <code>.map()</code>: loop through the array, and for the matching item return a new object with <code>completed</code> flipped. For all other items, return them unchanged.</label></label>
+        <label class="task"><input type="checkbox" /><label>Render each todo using <code>TodoItem.jsx</code>, passing the <code>todo</code> object and the three handler functions as props.</label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — The toggle pattern, step by step</summary>
+        <div class="callout-body">
+          <p>You have an array of todos. You want to flip <code>completed</code> on the one with a specific <code>id</code>. The right tool is <code>.map()</code>:</p>
+          <p>Loop through every item. For each one: if its <code>id</code> matches, return a new object that copies all existing properties with spread, but overrides <code>completed</code> with its opposite. If the id does not match, return the item as-is.</p>
+          <p>This creates a brand new array with a brand new object at the changed position. Everything else is untouched. React sees a new array reference and re-renders.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 2.8 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--green-dim);color:var(--green);">2.8</div>
+        <div class="step-title">Conditional Styling on TodoItem</div>
+      </div>
+      <p class="step-desc">A completed todo should look visually different. This is conditional rendering — applying classes based on a boolean.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>The text <code>&lt;span&gt;</code> in <code>TodoItem</code>: its <code>className</code> should use a ternary expression. When <code>todo.completed</code> is true, add <code>line-through text-gray-400</code>. When false, use the default text color.</label></label>
+        <label class="task"><input type="checkbox" /><label>The <code>&lt;input type="checkbox"&gt;</code>: its <code>checked</code> attribute should be bound to <code>todo.completed</code>. Its <code>onChange</code> should call <code>onToggle</code> with the todo's id.</label></label>
+        <label class="task"><input type="checkbox" /><label>Verify: clicking the checkbox toggles the completed state and the styling updates immediately.</label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — Template literal + ternary in className</summary>
+        <div class="callout-body">
+          <p>Use a JavaScript template literal (backticks) to combine fixed classes with conditional ones. The ternary sits inside <code>${"$"}{}</code>. Structure: fixed classes always apply, then a conditional expression adds or omits extra classes based on the boolean.</p>
+          <p>If the ternary has no "else" classes, use an empty string <code>""</code> as the falsy branch to avoid printing <code>undefined</code> into the class list.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       PHASE 3 — useEffect & API
+  ══════════════════════════════════════════════════════════ -->
+  <section id="phase3" class="phase">
+    <div class="phase-label p3"><span class="dot"></span>Phase 3</div>
+    <div class="phase-title">Side Effects & Live API Data</div>
+    <div class="phase-goal">Fetch real data from the internet when the component mounts. Handle loading and error states cleanly.</div>
+
+    <!-- 3.1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">3.1</div>
+        <div class="step-title">Pick Your API</div>
+      </div>
+      <p class="step-desc">Both options below are 100% free, require no account, and return plain JSON.</p>
+      <table>
+        <thead>
+          <tr><th>API</th><th>What it returns</th><th>Endpoint hint</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CoinGecko</strong></td>
+            <td>Crypto prices in USD</td>
+            <td><code>/simple/price?ids=bitcoin,ethereum&vs_currencies=usd</code></td>
+          </tr>
+          <tr>
+            <td><strong>wttr.in</strong></td>
+            <td>Weather for any city</td>
+            <td><code>wttr.in/[city]?format=j1</code> — search for "wttr.in json api"</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="tasks" style="margin-top:0.9rem;">
+        <label class="task"><input type="checkbox" /><label>Pick one API. Open the endpoint URL in your browser and study the JSON response shape. This tells you exactly what property names to access in your code.</label></label>
+        <label class="task"><input type="checkbox" /><label>Find the full base URL for your chosen API by searching "CoinGecko API v3 base url" or "wttr.in json docs". Do not guess URLs.</label></label>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">3.2</div>
+        <div class="step-title">Set Up the Three Async State Variables</div>
+      </div>
+      <p class="step-desc">Every async data fetch needs exactly three pieces of state. This is the universal pattern.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>In <code>CryptoWeatherWidget.jsx</code>, add a state variable for the fetched data — initial value: <code>null</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a state variable for the loading status — initial value: <code>true</code> (we start in the loading state).</label></label>
+        <label class="task"><input type="checkbox" /><label>Add a state variable for any error — initial value: <code>null</code>.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — Why three separate variables and not one object?</summary>
+        <div class="callout-body">
+          <p>You could combine them into one object: <code>{ data, loading, error }</code>. But three separate <code>useState</code> calls is cleaner for a beginner — each setter only touches one concern. The three-variable pattern is also exactly what the React <code>useReducer</code> pattern and libraries like React Query build on top of. You'll recognise it everywhere once you see it here.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">3.3</div>
+        <div class="step-title">Write the useEffect Hook</div>
+      </div>
+      <p class="step-desc">This is the most important step in Phase 3. Read every hint before you write.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Import <code>useEffect</code> from React alongside your existing <code>useState</code> import.</label></label>
+        <label class="task"><input type="checkbox" /><label>Call <code>useEffect()</code> with two arguments: a callback function, and an empty array <code>[]</code> as the second argument.</label></label>
+        <label class="task"><input type="checkbox" /><label>Inside the callback, write a <code>fetch()</code> call to your chosen API endpoint.</label></label>
+        <label class="task"><input type="checkbox" /><label>Chain a <code>.then()</code> that calls <code>response.json()</code> to parse the raw HTTP response into a JavaScript object.</label></label>
+        <label class="task"><input type="checkbox" /><label>Chain a second <code>.then()</code> that receives the parsed data, calls <code>setData()</code> with it, and sets <code>setLoading(false)</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Chain a <code>.catch()</code> that receives the error, calls <code>setError(err.message)</code>, and sets <code>setLoading(false)</code>.</label></label>
+        <label class="task"><input type="checkbox" /><label>Open the browser network tab. Confirm the request fires once on page load and returns a 200 response.</label></label>
+      </div>
+      <details class="concept">
+        <summary>Concept — Why useEffect? Why not just fetch at the top of the function?</summary>
+        <div class="callout-body">
+          <p>React component functions run on every render. If you placed a <code>fetch()</code> call directly in the function body, it would fire an HTTP request on every single re-render — including the re-renders caused by the data arriving. You'd get an infinite loop.</p>
+          <p><code>useEffect</code> is React's way of saying "run this code as a side effect, <em>after</em> rendering, and control exactly when it repeats." The empty <code>[]</code> dependency array means "the conditions for re-running never change," so it runs exactly once after the first render.</p>
+        </div>
+      </details>
+      <details class="warn">
+        <summary>Warning — The empty array [] is not optional</summary>
+        <div class="callout-body">
+          <p>If you omit the second argument entirely: <code>useEffect(fn)</code> — the effect runs after <em>every</em> render. Your fetch call would fire every time any state changes, creating an infinite loop as the arriving data triggers a re-render which triggers another fetch.</p>
+          <p>If you pass <code>[someVariable]</code> in the array: the effect re-runs whenever <code>someVariable</code> changes. An empty array <code>[]</code> has no variables that can change, so it only ever runs once.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">3.4</div>
+        <div class="step-title">Conditional Rendering — Loading, Error, Data</div>
+      </div>
+      <p class="step-desc">The widget's UI has three possible states. Show a different UI for each.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>If <code>loading</code> is true: render a "Fetching data..." text or a loading spinner. The rest of the component should not render yet.</label></label>
+        <label class="task"><input type="checkbox" /><label>If <code>error</code> is not null: render a red error message showing what went wrong. The rest should not render.</label></label>
+        <label class="task"><input type="checkbox" /><label>Otherwise: render the actual data UI.</label></label>
+        <label class="task"><input type="checkbox" /><label>Simulate a network error by changing the URL to something invalid. Confirm the error state appears instead of crashing the whole app.</label></label>
+      </div>
+      <details class="hint">
+        <summary>Hint — Early returns vs nested ternaries</summary>
+        <div class="callout-body">
+          <p>For three distinct states, early returns are cleaner than nesting ternaries. Structure your component with conditional return statements at the top of your JSX: if loading, return the spinner; if error, return the error message; otherwise, fall through to the main return with the data.</p>
+          <p>This avoids deeply nested <code>? ... : ...</code> chains that become hard to read. Early returns are the same technique used in Next.js server components.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- 3.5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background:var(--amber-dim);color:var(--amber);">3.5</div>
+        <div class="step-title">Display the Real Data</div>
+      </div>
+      <p class="step-desc">Now replace the hardcoded fake numbers with the real values from your fetched data object.</p>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>First: <code>console.log(data)</code> inside the data render branch. Open DevTools console and study the exact shape of the response object before writing any JSX.</label></label>
+        <label class="task"><input type="checkbox" /><label>Access the values using dot notation (e.g. <code>data.bitcoin.usd</code> for CoinGecko). Render them into the existing card layout you built in Phase 1.</label></label>
+        <label class="task"><input type="checkbox" /><label>Format the numbers nicely. For currency values, use <code>toLocaleString()</code> or <code>Intl.NumberFormat</code> — search how to format numbers in JavaScript.</label></label>
+        <label class="task"><input type="checkbox" /><label>Remove the <code>console.log</code> once you're done.</label></label>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       CONCEPTS QUICK REFERENCE
+  ══════════════════════════════════════════════════════════ -->
+  <section id="concepts" class="phase">
+    <div class="phase-label concepts-label"><span class="dot"></span>Reference</div>
+    <div class="phase-title">React Concepts Quick Reference</div>
+    <div class="phase-goal">Not instructions — these are the mental models behind what you just built. Read them when something doesn't feel right.</div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <h4>useState</h4>
+        <p>Returns <code>[value, setter]</code>. Calling the setter schedules a re-render. The setter <strong>replaces</strong> state entirely — it does not merge. For the new value to depend on the old one, use the functional form: <code>setState(prev =&gt; ...)</code>.</p>
+      </div>
+      <div class="concept-card">
+        <h4>useEffect</h4>
+        <p>Runs <em>after</em> rendering, not during. The second argument controls when it re-runs. <code>[]</code> = run once on mount. <code>[x]</code> = run when x changes. No array = run after every render. Never put a fetch directly in the component body.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Props</h4>
+        <p>Arguments passed from parent to child. Read-only from the child's perspective. A child never modifies its own props. To have a child change parent data, the parent passes a <strong>callback function</strong> as a prop.</p>
+      </div>
+      <div class="concept-card">
+        <h4>State Lifting</h4>
+        <p>When two sibling components need the same data, move it to their common ancestor. The ancestor owns the state. Siblings receive it via props and update it via callbacks. "Lift state up" until the data lives in the right place.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Controlled Inputs</h4>
+        <p>An input whose <code>value</code> is bound to React state and whose <code>onChange</code> updates that state. React owns the truth. The DOM is just a display. This enables validation, clearing, and syncing between inputs.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Immutability</h4>
+        <p>React's re-render trigger is a <strong>new object reference</strong>. Mutating in place (<code>.push()</code>, direct assignment) doesn't change the reference, so React doesn't re-render. Always return new arrays and objects: spread <code>[...arr]</code>, <code>{...obj}</code>.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Rendering Lists</h4>
+        <p><code>.map()</code> transforms an array into an array of JSX elements. Each element needs a unique, stable <code>key</code> prop on its outermost element. This key must come from your data, not from the array index.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Conditional Rendering</h4>
+        <p>Three tools: early <code>return</code> for mutually exclusive states, the <code>&&</code> operator for "render if true," and a <code>ternary</code> for "render A or B." Use early returns for loading/error/data — they read like plain English.</p>
+      </div>
+      <div class="concept-card">
+        <h4>Derived State</h4>
+        <p>If a value can be computed from existing state, compute it — don't store it in a separate <code>useState</code>. The running total is always <code>expenses.reduce(...)</code>. Two sources of truth for the same fact always desync. Derive; don't duplicate.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       FINAL MASTER CHECKLIST
+  ══════════════════════════════════════════════════════════ -->
+  <section id="checklist" class="phase">
+    <div class="phase-label concepts-label"><span class="dot"></span>Final</div>
+    <div class="phase-title">Master Checklist</div>
+    <div class="phase-goal">Every item must be checked before you can say you've finished. These are non-negotiable.</div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">H</div><div class="step-title">HTML Foundations</div></div>
+      <div class="checklist-grid tasks">
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;main&gt;</code> as the page wrapper</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;section&gt;</code> for each widget (not <code>&lt;div&gt;</code>)</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;form&gt;</code> for both the expense and todo forms</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;input type="text"&gt;</code> for name / task text</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;input type="number"&gt;</code> for the price</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;input type="checkbox"&gt;</code> for todo completion</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;button type="submit"&gt;</code> on form submit buttons</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>&lt;button type="button"&gt;</code> on delete buttons</label></label>
+        <label class="task"><input type="checkbox" /><label>Every input has a linked <code>&lt;label&gt;</code></label></label>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num" style="background:var(--cyan-dim);color:var(--cyan);">T</div><div class="step-title">Tailwind CSS</div></div>
+      <div class="checklist-grid tasks">
+        <label class="task"><input type="checkbox" /><label>Grid layout with responsive <code>md:grid-cols-3</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>flex</code> for alignment inside list items</label></label>
+        <label class="task"><input type="checkbox" /><label>Used <code>justify-between</code> to push elements to opposite sides</label></label>
+        <label class="task"><input type="checkbox" /><label>Consistent spacing with <code>p-</code>, <code>m-</code>, <code>gap-</code> utilities</label></label>
+        <label class="task"><input type="checkbox" /><label>Typography classes: weight, size, and color variants</label></label>
+        <label class="task"><input type="checkbox" /><label>Hover states: <code>hover:</code> prefix on at least two elements</label></label>
+        <label class="task"><input type="checkbox" /><label>Focus ring on all inputs: <code>focus:ring-</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Disabled state: <code>disabled:opacity-50</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Responsive layout confirmed on mobile viewport</label></label>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num" style="background:var(--green-dim);color:var(--green);">R</div><div class="step-title">React Core</div></div>
+      <div class="checklist-grid tasks">
+        <label class="task"><input type="checkbox" /><label>Components split into separate files in <code>src/components/</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Data passed between components using props</label></label>
+        <label class="task"><input type="checkbox" /><label>Controlled inputs wired to <code>useState</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Arrays of objects used as state for expenses and todos</label></label>
+        <label class="task"><input type="checkbox" /><label>State never mutated directly — spread operator used</label></label>
+        <label class="task"><input type="checkbox" /><label><code>.map()</code> used to render both lists</label></label>
+        <label class="task"><input type="checkbox" /><label>Every mapped element has a stable <code>key</code> from data</label></label>
+        <label class="task"><input type="checkbox" /><label><code>.filter()</code> used for deletion</label></label>
+        <label class="task"><input type="checkbox" /><label><code>.reduce()</code> used for the running total</label></label>
+        <label class="task"><input type="checkbox" /><label>Toggle uses <code>.map()</code> + spread to flip one boolean</label></label>
+        <label class="task"><input type="checkbox" /><label>Conditional rendering: loading state shown in widget</label></label>
+        <label class="task"><input type="checkbox" /><label>Conditional rendering: error state shown in widget</label></label>
+        <label class="task"><input type="checkbox" /><label>Conditional styling: <code>line-through</code> on completed todos</label></label>
+        <label class="task"><input type="checkbox" /><label><code>useEffect</code> with <code>[]</code> used to fetch API data</label></label>
+        <label class="task"><input type="checkbox" /><label>State lifted: updater functions passed from parent to child</label></label>
+        <label class="task"><input type="checkbox" /><label>Forms: <code>e.preventDefault()</code> called in <code>onSubmit</code></label></label>
+        <label class="task"><input type="checkbox" /><label>Inputs reset to <code>""</code> after form submission</label></label>
+      </div>
+    </div>
+
+    <div class="step" style="background:var(--accent-dim);border-color:rgba(124,106,247,0.3);">
+      <div class="step-header"><div class="step-num">✓</div><div class="step-title" style="color:var(--accent);">Definition of Done</div></div>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" /><label>Adding and deleting expenses works. Running total is accurate.</label></label>
+        <label class="task"><input type="checkbox" /><label>Adding todos works. Toggling marks them complete with visual strikethrough. Deleting works.</label></label>
+        <label class="task"><input type="checkbox" /><label>The widget shows a loading state, then displays real live data after it loads.</label></label>
+        <label class="task"><input type="checkbox" /><label>No console errors in the browser DevTools.</label></label>
+        <label class="task"><input type="checkbox" /><label>Layout is readable on a 375px mobile viewport.</label></label>
+        <label class="task"><input type="checkbox" /><label>All items in this checklist are checked.</label></label>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /page -->
+
+
+<script>
+  // ── Persist checkbox state in localStorage ──────────────
+  const KEY = 'personal-hub-guide-progress';
+
+  function saveState() {
+    const boxes = document.querySelectorAll('input[type="checkbox"]');
+    const state = Array.from(boxes).map(cb => cb.checked);
+    localStorage.setItem(KEY, JSON.stringify(state));
+    updateProgress();
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    const boxes = document.querySelectorAll('input[type="checkbox"]');
+    boxes.forEach((cb, i) => { if (state[i] !== undefined) cb.checked = state[i]; });
+    // sync .done class
+    document.querySelectorAll('.task').forEach(task => {
+      const cb = task.querySelector('input[type="checkbox"]');
+      if (cb && cb.checked) task.classList.add('done');
+    });
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const boxes = document.querySelectorAll('input[type="checkbox"]');
+    const total = boxes.length;
+    const done  = Array.from(boxes).filter(cb => cb.checked).length;
+    const pct   = total > 0 ? (done / total) * 100 : 0;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = done + ' / ' + total + ' tasks';
+  }
+
+  // Toggle .done class for strikethrough
+  document.querySelectorAll('.task').forEach(task => {
+    const cb = task.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+      task.classList.toggle('done', cb.checked);
+      saveState();
+    });
+  });
+
+  loadState();
+</script>
+</body>
+</html>
